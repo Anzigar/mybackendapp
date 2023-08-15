@@ -1,0 +1,93 @@
+version: "3.7"
+
+networks:
+  ansnet:
+
+volumes:
+  data_base_data:
+  phpmyadmindata:
+  src:
+  certbot:
+
+services:
+  app:
+    build:
+      args:
+        user: ans
+        uid: 12000
+      context: ./
+      dockerfile: Dockerfile
+    container_name: nodecontainer
+    restart: always
+    working_dir: /usr/src/app
+    volumes:
+      - .:/usr/src/app
+    ports:
+      - "5000:5000"
+    networks:
+      - ansnet
+
+  mariadb:
+    image: mariadb:10.4.8-bionic
+    container_name: ans-v2-maria
+    environment:
+      MYSQL_DATABASE: journey_node
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_USER: ans
+      MYSQL_PASSWORD: admin
+    volumes:
+      - data_base_data:/var/lib/mysql/
+    networks:
+      - ansnet
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:fpm-alpine
+    container_name: ans-v2-phpmyadmin
+    environment:
+      PMA_HOST: mariadb
+    volumes:
+      - phpmyadmindata:/var/www/html
+    networks:
+      - ansnet
+    depends_on:
+      - mariadb
+
+  nginx:
+    image: nginx:latest
+    container_name: ans-v2-nginx-phpmyadmin
+    volumes:
+      - ./default.conf:/etc/nginx/conf.d/default.conf:ro
+      - phpmyadmindata:/var/www/html/:ro
+    ports:
+      - "125:80"
+    networks:
+      - ansnet
+    depends_on:
+      - mariadb
+      - phpmyadmin
+  nginx-app:
+    image: nginx:1.17.4-alpine
+    container_name: ans-v2-nginx-app
+    ports:
+      - "8080:80"
+      - "443:443"
+    restart: always
+    links:
+      -  app
+    volumes:
+      - ./src:/var/www/html
+      - ./prod_docker/nginx:/etc/nginx/conf.d/:ro
+      - ./certbot/www/:/var/www/certbot/:ro
+      - ./certbot/conf/:/etc/nginx/ssl/:ro
+    networks:
+      - ansnet
+    depends_on:
+      - mariadb
+      -  app
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - ./certbot/www/:/var/www/certbot/:rw
+      - ./certbot/conf/:/etc/letsencrypt/:rw
+      
+
