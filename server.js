@@ -65,7 +65,7 @@ app.post("/addUser", async(res,req) =>{
         const insertValues =[
             req.body.fname,
             req.body.lname,
-            rreq.body.phoneNumber,
+            req.body.phoneNumber,
             req.body.profile,
             password
         ];
@@ -131,14 +131,14 @@ app.post('/upload-video', upload, async (req, res) => {
             return res.status(400).json({ error: 'No file inputs were submitted' });
         }
       
-        // Get the video file from the file inputs
+        // Get the video file 
         const videoFile = fileInputs[0];
 
-        // Save the video file to your server
+        // Save the video file to  server
         const serverFilePath = `./uploads/${videoFile.originalname}`;
         fs.writeFileSync(serverFilePath, videoFile.buffer);
 
-        // Upload the video file to S3
+        // Upload the video to S3
         const params = {
             Bucket: bucketName,
             Key: videoFile.originalname,
@@ -149,10 +149,10 @@ app.post('/upload-video', upload, async (req, res) => {
         const command = new PutObjectCommand(params);
         await s3.send(command);
 
-        // Delete the video file from your server after uploading to S3
+        // Delete the video file 
         fs.unlinkSync(serverFilePath);
         console.log(typeof{calories});
-        // Store the video file information in the database
+        // Store the video file info
         const query = 'INSERT INTO videos(title, category, description, calories, duration, s3Key) VALUES (?, ?, ?, ?, ?, ?)';
         const s3Key = videoFile.originalname;
         await dbConn().execute(query, [req.body.title, req.body.category, req.body.description, req.body.calories, req.body.duration, s3Key]);
@@ -169,17 +169,17 @@ app.post('/upload-video', upload, async (req, res) => {
 //get all videos
 app.get("/allVideos", async (req, res) => {
     try {
-        // Perform a database query to retrieve video information
+        // Perform a database 
         const dbQuery = 'SELECT title, category, calories, duration, description, s3Key FROM videos';
         const [dbRows] = await dbConn().query(dbQuery);
 
-        // Create the ListObjectsCommand to fetch the list of objects (videos) from the S3 bucket
+        // Create the  S3 bucket
         const s3Command = new ListObjectsCommand({ Bucket: bucketName });
 
-        // Send the command and await the response
+        // Send 
         const s3Response = await s3.send(s3Command);
 
-        // Map the S3 response to a list of video objects with enriched information
+        // Map the S3 
         const allVideos = dbRows.map(dbItem => {
             const s3Item = s3Response.Contents.find(s3Obj => s3Obj.Key === dbItem.s3Key);
             return {
@@ -227,18 +227,19 @@ app.get("/video/:id", async (req, res) => {
         res.status(500).json({ error: 'An error occurred while retrieving video data' });
     }
 });
-  // Updated PUT endpoint to update video details
+
+  // Updated 
   app.put('/updateVideo/:id', async (req, res) => {
     const videoId = req.params.id;
     const { title, category, calories, description } = req.body;
     try {
-        // Fetch video data from the database first
+        // Fetch video 
         const videoData = await DbSelects.getVideoDataById(videoId);
         if (!videoData) {
             return res.status(404).json({ error: 'Video not found' });
         }
         
-        // Update the video details in the database
+        // Update 
         const updateQuery = 'UPDATE videos SET title = ?, category = ?, calories = ?, description = ? WHERE id = ?';
         await dbConn().execute(updateQuery, [title, category, calories, description, videoId]);
 
@@ -249,6 +250,7 @@ app.get("/video/:id", async (req, res) => {
     }
 });
   
+//delete video
 app.delete('/delete-video/:id', async (req, res) => {
     const videoId = req.params.id;
     try {
@@ -257,14 +259,14 @@ app.delete('/delete-video/:id', async (req, res) => {
             return res.status(404).json({ error: 'Video not found' });
         }
 
-        // Delete the video from S3
+        // Delete
         const deleteCommand = new DeleteObjectCommand({
             Bucket: bucketName,
             Key: videoData.s3Key,
         });
         await s3.send(deleteCommand);
 
-        // Delete the video from the database
+        // Delete 
         const deleteSql = 'DELETE FROM videos WHERE id = ?';
         await dbConn().execute(deleteSql, [videoId]);
 
@@ -292,7 +294,7 @@ app.post('/login', async (req, res)=> {
         const user = result[0];
         const dbPassword = user.Password;
 
-        //compare the password with the other in the database
+        //compare the password 
         const passwordMatch = await compare(password,dbPassword);
 
         if (!passwordMatch){
@@ -335,14 +337,14 @@ app.post('/addAdmin', async (req, res) => {
     const sql = 'INSERT INTO admin(userName, Password) VALUES (?, ?)';
     const { uname, password } = req.body;
     try {
-        // Ensure the request includes both uname and password
+        // Ensure the uname and password
         if (!uname || !password) {
             return res.json({ success: false, message: 'Username and password are required' });
         }
-        // Hash the provided password with the generated salt
+        // Hash 
         const hashedPassword = await hash(password, 13);
         console.log(hashedPassword)
-        await dbConn().query(sql, [uname, hashedPassword]); // Assuming dbConn is the database connection
+        await dbConn().query(sql, [uname, hashedPassword]);
         return res.json({ success: true, message: 'User added successfully' });
     } catch (err) {
         console.error(err);
