@@ -20,7 +20,7 @@ RUN npm install bcrypt
 # Bundle app source
 COPY . .
 
-EXPOSE 8080
+EXPOSE 5000
 
 RUN chmod +x "/usr/src/app/start.sh"
 ENTRYPOINT [ "/bin/sh", "/usr/src/app/start.sh" ]
