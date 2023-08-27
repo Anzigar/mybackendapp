@@ -12,7 +12,7 @@ import fs from "fs";
 const app = express();
 app.use(express.json());
 const httpServer = createServer(app);
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 8080;
 const bucketName = 'journey-v1';
 
 //session 
