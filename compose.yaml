@@ -65,6 +65,7 @@ services:
     depends_on:
       - mariadb
       - phpmyadmin
+      
   nginx-app:
     image: nginx:1.17.4-alpine
     container_name: ans-v2-nginx-app
