@@ -35,6 +35,7 @@ const s3 = new S3Client({
 const storage = multer.memoryStorage();
 const upload = multer({storage}).array('videoFile');
 
+
 //get user
 app.get("/user", async(req,res)=>{
     const userData = await DbSelects.getAllData();
@@ -169,6 +170,7 @@ app.post('/upload-video', upload, async (req, res) => {
 //get all videos
 app.get("/allVideos", async (req, res) => {
     try {
+        console.log('hi there');
         // Perform a database 
         const dbQuery = 'SELECT title, category, calories, duration, description, s3Key FROM videos';
         const [dbRows] = await dbConn().query(dbQuery);
